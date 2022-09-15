@@ -12,12 +12,17 @@
 #include <algorithm>
 #include <ctime>
 #include <iostream>
-#include <netinet/in.h>
 #include <sstream>
 #include <string>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <utility>
+
+#ifndef WIN32
+#include <netinet/in.h>
+#include <sys/socket.h>
+#else
+#include <Winsock2.h>
+#endif
 
 #include "BoteContext.h"
 #include "Logging.h"

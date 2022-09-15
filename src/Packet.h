@@ -18,7 +18,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <netinet/in.h>
+
 #include <openssl/sha.h>
 #include <sstream>
 #include <string>

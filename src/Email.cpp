@@ -1179,8 +1179,8 @@ Email::lzmaDecompress (std::vector<uint8_t> &outBuf,
 
   while (outPos < outBuf.size ())
     {
-      SizeT destLen = std::min (BUF_SIZE, outBuf.size () - outPos);
-      SizeT srcLen = std::min (BUF_SIZE, inBuf.size () - inPos);
+      SizeT destLen = std::min ((int)BUF_SIZE, (int)(outBuf.size () - outPos));
+      SizeT srcLen = std::min ((int)BUF_SIZE, (int)(inBuf.size () - inPos));
 
       res = LzmaDec_DecodeToBuf (&dec,
                                  &outBuf[outPos], &destLen,

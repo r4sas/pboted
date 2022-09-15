@@ -6,13 +6,16 @@
  * See full license text in LICENSE file at top of project tree
  */
 
-#include <arpa/inet.h>
 #include <cstring>
 #include <fcntl.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#else
+#include <Winsock2.h>
+#endif
 
 #include "BoteContext.h"
 #include "EmailWorker.h"
@@ -42,7 +45,7 @@ POP3::POP3 (const std::string &address, int port)
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons (port);
   server_addr.sin_addr.s_addr = inet_addr (address.c_str ());
-  bzero (&(server_addr.sin_zero), 8);
+  memset(&(server_addr.sin_zero), 0, 8);
 
   if ((server_sockfd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -76,7 +79,11 @@ POP3::start ()
       LogPrint (eLogError, "POP3: Bind error: ", strerror (errno));
     }
 
+#ifndef WIN32
   fcntl (server_sockfd, F_SETFL, fcntl (server_sockfd, F_GETFL, 0) | O_NONBLOCK);
+#else
+  ioctlsocket(server_sockfd, FIONBIO, (u_long*)1);
+#endif
 
   if (listen (server_sockfd, MAX_CLIENTS) == -1)
     {
@@ -91,7 +98,7 @@ POP3::start ()
 void
 POP3::stop ()
 {
-  started = false;
+	started = false;
   close (server_sockfd);
 
   LogPrint (eLogInfo, "POP3: Stopped");

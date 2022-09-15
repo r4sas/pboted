@@ -27,6 +27,11 @@ include(TargetArch)
 target_architecture(ARCHITECTURE)
 
 #
+
+if (MSYS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32 -DWIN32_LEAN_AND_MEAN -Wno-unused-variable")
+endif ()
+
 set(LIBI2PD_SRC_DIR ${CMAKE_SOURCE_DIR}/lib/libi2pd)
 set(I2PSAM_SRC_DIR ${CMAKE_SOURCE_DIR}/lib/i2psam)
 set(LIBLZMA_SRC_DIR ${CMAKE_SOURCE_DIR}/lib/lzma)

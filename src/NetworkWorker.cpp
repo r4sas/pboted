@@ -60,7 +60,11 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
   if ((bind (f_socket, f_addrinfo->ai_addr, f_addrinfo->ai_addrlen)) != 0)
     {
       freeaddrinfo (f_addrinfo);
+#ifndef WIN32
       close (f_socket);
+#else
+      closesocket (f_socket);
+#endif
       throw udp_client_server_runtime_error (
           ("Network: UDPReceiver: Could not bind UDP socket with: \"" + address
            + ":" + decimal_port + "\", errcode=" + gai_strerror (errcode))
@@ -78,7 +82,12 @@ UDPReceiver::~UDPReceiver ()
     }
 
   freeaddrinfo (f_addrinfo);
+#ifndef WIN32
   close (f_socket);
+#else
+  closesocket (f_socket);
+#endif
+
 }
 
 void
@@ -124,7 +133,12 @@ UDPReceiver::run ()
 ssize_t
 UDPReceiver::recv ()
 {
+#ifndef WIN32
   return ::recv (f_socket, UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
+#else
+  return ::recv (f_socket, (char *)UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
+#endif
+
 }
 
 void
@@ -207,7 +221,12 @@ UDPSender::UDPSender (const std::string &addr, int port)
   if (f_socket < 0)
     {
       freeaddrinfo (f_addrinfo);
+#ifndef WIN32
       close (f_socket);
+#else
+      closesocket (f_socket);
+#endif
+
       throw udp_client_server_runtime_error (
           ("Network: UDPSender: Can't create socket for " + addr + ":"
            + decimal_port)
@@ -225,7 +244,11 @@ UDPSender::~UDPSender ()
     }
 
   freeaddrinfo (f_addrinfo);
+#ifndef WIN32
   close (f_socket);
+#else
+  closesocket (f_socket);
+#endif
 }
 
 void
