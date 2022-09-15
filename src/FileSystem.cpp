@@ -11,9 +11,9 @@
 #include <boost/filesystem.hpp>
 #include <system_error>
 
-#ifdef _WIN32
+#ifdef WIN32
 #include <shlobj.h>
-#include <windows.h>
+//#include <Winsock2.h>
 #endif
 
 #include "FileSystem.h"

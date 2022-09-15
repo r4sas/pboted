@@ -46,8 +46,13 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
               .c_str ());
     }
 
+#ifndef WIN32
   f_socket = socket (f_addrinfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC,
                      f_addrinfo->ai_protocol);
+#else
+  f_socket = socket (f_addrinfo->ai_family, SOCK_DGRAM,
+                     f_addrinfo->ai_protocol);
+#endif
   if (f_socket == -1)
     {
       freeaddrinfo (f_addrinfo);

@@ -25,6 +25,10 @@
 #include <utility>
 #include <vector>
 
+#ifdef _WIN32
+#include <Winsock2.h>
+#endif
+
 #include "Logging.h"
 
 // libi2pd

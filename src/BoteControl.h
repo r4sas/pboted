@@ -11,9 +11,15 @@
 
 #include <map>
 #include <string>
+#include <thread>
+
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <thread>
+#else
+#include <Winsock2.h>
+#include <afunix.h>
+#endif
 
 #include "i2psam.h"
 
@@ -64,7 +70,11 @@ private:
   std::thread *m_thread;
 
   const std::string socket_path;
+#ifndef WIN32
   int conn_sockfd, data_sockfd;
+#else
+  SOCKET conn_sockfd, data_sockfd;
+#endif
   struct sockaddr_un conn_addr; //, data_addr;
 
   std::map<std::string, Handler> handlers;

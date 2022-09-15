@@ -197,7 +197,7 @@ Logging::Process (std::shared_ptr<LogMsg> msg)
   short_tid = (short) (hasher (msg->tid) % 1000);
   switch (m_Destination)
     {
-#ifndef _WIN32
+#ifndef WIN32
       case eLogSyslog:
         syslog (GetSyslogPrio (msg->level), "[%03u] %s", short_tid,
                 msg->text.c_str ());
@@ -273,7 +273,7 @@ Logging::SendTo (std::shared_ptr<std::ostream> os)
   m_LogStream = os;
 }
 
-#ifndef _WIN32
+#ifndef WIN32
 void
 Logging::SendTo (const char *name, int facility)
 {

@@ -180,6 +180,13 @@ message(STATUS "----------------------------------------")
 add_executable("${PROJECT_NAME}" ${PBOTE_SRC})
 
 if (NOT MSVC)
+    if (MSYS)
+        set(MINGW_EXTRA
+            "wsock32"
+            "ws2_32"
+            "iphlpapi"
+        )
+    endif ()
     if (WITH_STATIC)
         set_target_properties("${PROJECT_NAME}" PROPERTIES LINK_FLAGS "-static")
     endif ()
@@ -200,11 +207,12 @@ target_link_libraries("${PROJECT_NAME}"
                       libi2pd
                       i2psam
                       liblzma
-                      Threads::Threads
-                      ${ZLIB_LIBRARIES}
                       ${MIMETIC_LIBRARIES}
                       ${Boost_LIBRARIES}
-                      ${OPENSSL_LIBRARIES}
+                      OpenSSL::SSL
+                      OpenSSL::Crypto
+                      ZLIB::ZLIB
+                      Threads::Threads
                       ${MINGW_EXTRA}
                       ${DL_LIB}
                       ${CMAKE_REQUIRED_LIBRARIES})

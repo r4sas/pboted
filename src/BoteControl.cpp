@@ -31,7 +31,11 @@ BoteControl::BoteControl (const std::string &sock_path)
   int status;
 
   conn_sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
+#ifndef WIN32
   if (conn_sockfd == -1)
+#else
+  if (conn_sockfd == INVALID_SOCKET)
+#endif
     LogPrint (eLogError, "BoteControl: Invalid socket");
 
   unlink (socket_path.c_str ());
@@ -99,7 +103,11 @@ BoteControl::run ()
 {
   while (m_is_running)
     {
+#ifndef WIN32
       if ((data_sockfd = accept (conn_sockfd, NULL, NULL)) == -1)
+#else
+      if ((data_sockfd = accept (conn_sockfd, NULL, NULL)) == INVALID_SOCKET)
+#endif
         {
           if (errno != EWOULDBLOCK && errno != EAGAIN)
             {
@@ -163,7 +171,11 @@ BoteControl::release ()
 void
 BoteControl::close ()
 {
+#ifndef WIN32
   if (conn_sockfd != (int)INVALID_SOCKET)
+#else
+  if (conn_sockfd != INVALID_SOCKET)
+#endif
     {
       ::close (conn_sockfd);
       conn_sockfd = INVALID_SOCKET;

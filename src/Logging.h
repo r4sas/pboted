@@ -115,7 +115,7 @@ class Logging
    */
   void SetTimeFormat (std::string format) { m_TimeFormat = format; };
 
-#ifndef _WIN32
+#ifndef WIN32
   /**
    * @brief Sets log destination to syslog
    * @param name     Wanted program name

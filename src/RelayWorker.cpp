@@ -6,7 +6,12 @@
  * See full license text in LICENSE file at top of project tree
  */
 
+#ifndef WIN32
 #include <netinet/in.h>
+#else
+#include <Winsock2.h>
+#endif
+
 #include <utility>
 
 #include "Packet.h"
