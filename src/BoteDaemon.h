@@ -44,6 +44,30 @@ protected:
   Daemon_Singleton_Private &d;
 };
 
+#ifdef WIN32
+#define Daemon pbote::util::DaemonWin32::Instance()
+class DaemonWin32 : public Daemon_Singleton
+{
+public:
+  static DaemonWin32 &Instance()
+    {
+      static DaemonWin32 instance;
+      return instance;
+    }
+
+  int start() override;
+  bool stop() override;
+  void run() override;
+
+private:
+  std::string pidfile;
+  int pidFH;
+
+public:
+  int gracefulShutdownInterval; // in seconds
+};
+
+#else // WIN32
 #define Daemon pbote::util::DaemonLinux::Instance()
 class DaemonLinux : public Daemon_Singleton
 {
@@ -67,6 +91,8 @@ private:
 public:
   int gracefulShutdownInterval; // in seconds
 };
+
+#endif // WIN32
 
 } // namespace util
 } // namespace pbote

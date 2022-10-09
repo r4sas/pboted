@@ -108,6 +108,8 @@ if (WITH_STATIC)
     set(Boost_USE_STATIC_LIBS ON)
     set(Boost_USE_STATIC_RUNTIME ON)
 
+    set(OPENSSL_USE_STATIC_LIBS ON)
+
     set(ZLIB_USE_STATIC_LIBS ON)
     set(ZLIB_NAMES zlibstatic zlibstat zlib z)
 

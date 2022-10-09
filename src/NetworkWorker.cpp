@@ -37,6 +37,22 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_protocol = IPPROTO_UDP;
 
+#ifdef WIN32
+  WORD wVersionRequested;
+  WSADATA wsaData;
+
+  wVersionRequested = MAKEWORD(2, 2);
+
+  errcode = WSAStartup(wVersionRequested, &wsaData);
+  if (errcode != 0)
+    {
+      throw udp_client_server_runtime_error (
+          ("Network: UDPReceiver: WSAStartup failed with: \"" + address
+           + ":" + decimal_port + "\", errcode=" + char(errcode) + ": " + gai_strerror (errcode))
+              .c_str ());
+    }
+#endif
+
   errcode = getaddrinfo (address.c_str (), decimal_port, &hints, &f_addrinfo);
   if (errcode != 0 || f_addrinfo == nullptr)
     {
@@ -62,7 +78,8 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
               .c_str ());
     }
 
-  if ((bind (f_socket, f_addrinfo->ai_addr, f_addrinfo->ai_addrlen)) != 0)
+  errcode = bind (f_socket, f_addrinfo->ai_addr, f_addrinfo->ai_addrlen);
+  if (errcode != 0)
     {
       freeaddrinfo (f_addrinfo);
 #ifndef WIN32
@@ -72,7 +89,7 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
 #endif
       throw udp_client_server_runtime_error (
           ("Network: UDPReceiver: Could not bind UDP socket with: \"" + address
-           + ":" + decimal_port + "\", errcode=" + gai_strerror (errcode))
+           + ":" + decimal_port + "\", errcode=" + char(errcode) + ": " + gai_strerror (errcode))
               .c_str ());
     }
 }

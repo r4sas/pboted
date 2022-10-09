@@ -25,7 +25,9 @@
 #include <utility>
 #include <vector>
 
-#ifdef _WIN32
+#ifndef _WIN32
+#include <netinet/in.h>
+#else
 #include <Winsock2.h>
 #endif
 

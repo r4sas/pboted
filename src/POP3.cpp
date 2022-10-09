@@ -98,7 +98,7 @@ POP3::start ()
 void
 POP3::stop ()
 {
-	started = false;
+  started = false;
   close (server_sockfd);
 
   LogPrint (eLogInfo, "POP3: Stopped");
