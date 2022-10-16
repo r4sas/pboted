@@ -23,12 +23,12 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         msystem: ${{ matrix.msystem }}
-        install: base-devel mingw-w64-${{ matrix.arch }}-gcc mingw-w64-${{ matrix.arch }}-boost mingw-w64-${{ matrix.arch }}-openssl
+        install: base-devel mingw-w64-${{ matrix.arch }}-cmake mingw-w64-${{ matrix.arch }}-gcc mingw-w64-${{ matrix.arch }}-boost mingw-w64-${{ matrix.arch }}-openssl
         update: true
     - name: Build application
       run: |
         cd build
-        cmake -G "MSYS Makefiles" -DPC_MIMETIC_LIBDIR=lib/compat-win/ucrt64/lib -DPC_MIMETIC_INCLUDEDIR=lib/compat-win/include .
+        cmake -G "MSYS Makefiles" -DMIMETIC_LIBRARY=../lib/compat-win/${{ matrix.arch }}/lib/libmimetic.a -DMIMETIC_INCLUDE_DIR=../lib/compat-win/include .
         make -j$(nproc)
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
