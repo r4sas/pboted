@@ -28,7 +28,7 @@ jobs:
     - name: Build application
       run: |
         cd build
-        cmake -G "MSYS Makefiles" -DMIMETIC_LIBRARY=../lib/compat-win/${{ matrix.arch }}/lib/libmimetic.a -DMIMETIC_INCLUDE_DIR=../lib/compat-win/include .
+        cmake -G "MSYS Makefiles" -DMIMETIC_LIBRARY=../lib/compat-win/${{ matrix.arch }}/lib/libmimetic.a -DMIMETIC_INCLUDE_DIR=../lib/compat-win/include -DWITH_STATIC=ON .
         make -j$(nproc)
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
