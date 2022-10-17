@@ -19,7 +19,7 @@
 #include <string>
 #include <thread>
 
-#ifndef WIN32
+#ifndef _WIN32
 	#include <syslog.h>
 #endif
 
@@ -115,7 +115,7 @@ class Logging
    */
   void SetTimeFormat (std::string format) { m_TimeFormat = format; };
 
-#ifndef WIN32
+#ifndef _WIN32
   /**
    * @brief Sets log destination to syslog
    * @param name     Wanted program name

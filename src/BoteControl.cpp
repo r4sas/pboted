@@ -31,7 +31,7 @@ BoteControl::BoteControl (const std::string &sock_path)
   int status;
 
   conn_sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
-#ifndef WIN32
+#ifndef _WIN32
   if (conn_sockfd == -1)
 #else
   if (conn_sockfd == INVALID_SOCKET)
@@ -103,7 +103,7 @@ BoteControl::run ()
 {
   while (m_is_running)
     {
-#ifndef WIN32
+#ifndef _WIN32
       if ((data_sockfd = accept (conn_sockfd, NULL, NULL)) == -1)
 #else
       if ((data_sockfd = accept (conn_sockfd, NULL, NULL)) == INVALID_SOCKET)
@@ -121,7 +121,7 @@ BoteControl::run ()
           //LogPrint (eLogDebug, "BoteControl: run: Received new connection");
           handle_request ();
         }
-#ifndef WIN32
+#ifndef _WIN32
         ::close(data_sockfd);
 #else
         ::closesocket(data_sockfd);
@@ -132,7 +132,7 @@ BoteControl::run ()
 void
 BoteControl::write_data (const std::string &msg)
 {
-#ifndef WIN32
+#ifndef _WIN32
   ssize_t sent_bytes = write (data_sockfd, msg.c_str (), msg.length ());
 #else
   ssize_t sent_bytes = send (data_sockfd, msg.c_str (), msg.length (), 0);
@@ -155,7 +155,7 @@ BoteControl::read_data ()
   char buffer[BUFF_SIZE];
   memset (buffer, 0, BUFF_SIZE);
 
-#ifndef WIN32
+#ifndef _WIN32
   ssize_t recieved_bytes = read (data_sockfd, buffer, BUFF_SIZE);
 #else
   ssize_t recieved_bytes = recv (data_sockfd, buffer, BUFF_SIZE, 0);
@@ -183,13 +183,13 @@ BoteControl::release ()
 void
 BoteControl::close ()
 {
-#ifndef WIN32
+#ifndef _WIN32
   if (conn_sockfd != (int)INVALID_SOCKET)
 #else
   if (conn_sockfd != INVALID_SOCKET)
 #endif
     {
-#ifndef WIN32
+#ifndef _WIN32
       ::close (conn_sockfd);
 #else
       ::closesocket (conn_sockfd);

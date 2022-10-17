@@ -117,7 +117,7 @@ Daemon_Singleton::init(int argc, char *argv[],
       LogPrint(eLogInfo, "Log: Will send messages to ", logfile);
       pbote::log::Logger().SendTo(logfile);
     }
-#ifndef WIN32
+#ifndef _WIN32
   else if (logs == "syslog")
     {
       LogPrint(eLogInfo, "Log: Will send messages to syslog");

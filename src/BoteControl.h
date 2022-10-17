@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
 #else
@@ -70,7 +70,7 @@ private:
   std::thread *m_thread;
 
   const std::string socket_path;
-#ifndef WIN32
+#ifndef _WIN32
   int conn_sockfd, data_sockfd;
 #else
   SOCKET conn_sockfd, data_sockfd;

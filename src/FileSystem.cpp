@@ -11,7 +11,7 @@
 #include <boost/filesystem.hpp>
 #include <system_error>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <shlobj.h>
 #endif
 
@@ -25,7 +25,7 @@ namespace fs
 
 std::string appName = "pboted";
 std::string dataDir = "";
-#ifdef WIN32
+#ifdef _WIN32
 std::string dirSep = "\\";
 #else
 std::string dirSep = "/";
@@ -47,43 +47,59 @@ DetectDataDir (const std::string &cmdline_param, bool isService)
       return;
     }
 
-#ifdef WIN32
-  wchar_t localAppData[MAX_PATH];
-
-  // check executable directory first
-  if(!GetModuleFileNameW(NULL, localAppData, MAX_PATH))
-    {
-      fprintf(stderr, "Error: Unable to get application path!");
-      exit(1);
-    }
-  else
-    {
-      auto execPath = boost::filesystem::wpath(localAppData).parent_path();
-
-      if(boost::filesystem::exists(execPath/"pboted.conf"))
-        {
-          dataDir = execPath.string ();
-        }
-      else // otherwise %appdata%
-        {
-          if(SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, localAppData) != S_OK)
-            {
-              fprintf(stderr, "Error: Unable to get AppData path!");
-              exit(1);
-            }
-          else
-            {
-              dataDir = boost::filesystem::wpath(localAppData).string() + "\\" + appName;
-            }
-        }
-    }
-#else
   // otherwise use /data/files
   char *home = getenv("HOME");
   if (isService)
     {
+#ifdef _WIN32
+      wchar_t commonAppData[MAX_PATH];
+      if(SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, commonAppData) != S_OK)
+        {
+           fprintf(stderr, "Error: Unable to get common AppData path!");
+           exit(1);
+        }
+      else
+        {
+           dataDir = boost::filesystem::wpath(commonAppData).string() + dirSep + appName;
+        }
+#else
       dataDir = "/var/lib/" + appName;
+#endif
     }
+#ifdef _WIN32
+  else
+    {
+      wchar_t localAppData[MAX_PATH];
+
+      // check executable directory first
+      if(!GetModuleFileNameW(NULL, localAppData, MAX_PATH))
+        {
+          fprintf(stderr, "Error: Unable to get application path!");
+          exit(1);
+        }
+      else
+        {
+          auto execPath = boost::filesystem::wpath(localAppData).parent_path();
+
+          if(boost::filesystem::exists(execPath/"pboted.conf"))
+            {
+              dataDir = execPath.string ();
+            }
+          else // otherwise %appdata%
+            {
+              if(SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, localAppData) != S_OK)
+                {
+                  fprintf(stderr, "Error: Unable to get AppData path!");
+                  exit(1);
+                }
+              else
+                {
+                  dataDir = boost::filesystem::wpath(localAppData).string() + dirSep + appName;
+                }
+            }
+        }
+    }
+#else
   else if (home != nullptr && strlen(home) > 0)
     {
       dataDir = std::string(home) + "/." + appName;

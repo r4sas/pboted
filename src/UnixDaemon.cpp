@@ -6,7 +6,7 @@
  * See full license text in LICENSE file at top of project tree
  */
 
-#ifndef WIN32 // Unix-only
+#ifndef _WIN32 // Unix-only
 
 #include <fcntl.h>
 #include <csignal>

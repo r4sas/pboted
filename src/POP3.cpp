@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <arpa/inet.h>
 #else
 #include <Winsock2.h>
@@ -79,7 +79,7 @@ POP3::start ()
       LogPrint (eLogError, "POP3: Bind error: ", strerror (errno));
     }
 
-#ifndef WIN32
+#ifndef _WIN32
   fcntl (server_sockfd, F_SETFL, fcntl (server_sockfd, F_GETFL, 0) | O_NONBLOCK);
 #else
   ioctlsocket(server_sockfd, FIONBIO, (u_long*)1);

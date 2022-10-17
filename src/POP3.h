@@ -11,7 +11,7 @@
 
 #include <string>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>

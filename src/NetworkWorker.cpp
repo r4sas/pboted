@@ -37,7 +37,7 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_protocol = IPPROTO_UDP;
 
-#ifdef WIN32
+#ifdef _WIN32
   WORD wVersionRequested;
   WSADATA wsaData;
 
@@ -62,7 +62,7 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
               .c_str ());
     }
 
-#ifndef WIN32
+#ifndef _WIN32
   f_socket = socket (f_addrinfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC,
                      f_addrinfo->ai_protocol);
 #else
@@ -82,7 +82,7 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
   if (errcode != 0)
     {
       freeaddrinfo (f_addrinfo);
-#ifndef WIN32
+#ifndef _WIN32
       close (f_socket);
 #else
       closesocket (f_socket);
@@ -104,7 +104,7 @@ UDPReceiver::~UDPReceiver ()
     }
 
   freeaddrinfo (f_addrinfo);
-#ifndef WIN32
+#ifndef _WIN32
   close (f_socket);
 #else
   closesocket (f_socket);
@@ -155,7 +155,7 @@ UDPReceiver::run ()
 ssize_t
 UDPReceiver::recv ()
 {
-#ifndef WIN32
+#ifndef _WIN32
   return ::recv (f_socket, UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
 #else
   return ::recv (f_socket, (char *)UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
@@ -243,7 +243,7 @@ UDPSender::UDPSender (const std::string &addr, int port)
   if (f_socket < 0)
     {
       freeaddrinfo (f_addrinfo);
-#ifndef WIN32
+#ifndef _WIN32
       close (f_socket);
 #else
       closesocket (f_socket);
@@ -266,7 +266,7 @@ UDPSender::~UDPSender ()
     }
 
   freeaddrinfo (f_addrinfo);
-#ifndef WIN32
+#ifndef _WIN32
   close (f_socket);
 #else
   closesocket (f_socket);

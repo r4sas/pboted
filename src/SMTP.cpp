@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <arpa/inet.h>
 #endif
 
@@ -78,7 +78,7 @@ SMTP::start ()
       LogPrint (eLogError, "SMTP: Bind error: ", strerror (errno));
     }
 
-#ifndef WIN32
+#ifndef _WIN32
   fcntl (server_sockfd, F_SETFL, fcntl (server_sockfd, F_GETFL, 0) | O_NONBLOCK);
 #else
   ioctlsocket (server_sockfd, FIONBIO, (u_long*)1);

@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <utility>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #else
