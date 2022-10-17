@@ -938,7 +938,7 @@ public:
     for (auto identity : data)
     {
       size_t sz = identity.GetFullLen ();
-      std::vector<uint8_t> t_key = {0};
+      std::vector<uint8_t> t_key(384);
       identity.ToBuffer (t_key.data (), sz);
       uint8_t cut_key[384] = {0};
       memcpy(cut_key, t_key.data (), 384);
