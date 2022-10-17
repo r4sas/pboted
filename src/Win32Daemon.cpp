@@ -8,20 +8,11 @@
 
 #ifdef _WIN32 // Windows-only
 
-#include <fcntl.h>
-#include <csignal>
-#include <cstdlib>
-#include <sys/stat.h>
 #include <thread>
-#include <unistd.h>
 
-#include "BoteContext.h"
-#include "ConfigParser.h"
 #include "BoteDaemon.h"
 #include "DHTworker.h"
-#include "FileSystem.h"
 #include "Logging.h"
-#include "RelayWorker.h"
 
 
 namespace pbote

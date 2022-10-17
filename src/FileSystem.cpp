@@ -47,8 +47,10 @@ DetectDataDir (const std::string &cmdline_param, bool isService)
       return;
     }
 
-  // otherwise use /data/files
+#ifndef _WIN32
   char *home = getenv("HOME");
+#endif
+
   if (isService)
     {
 #ifdef _WIN32
