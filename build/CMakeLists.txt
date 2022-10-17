@@ -200,6 +200,14 @@ if (NOT MSVC)
         "ws2_32"
         "iphlpapi"
     )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                       DEPENDS "${PROJECT_NAME}"
+                       COMMAND ${CMAKE_OBJCOPY}
+                       ARGS --only-keep-debug $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE:${PROJECT_NAME}>.debug)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                       DEPENDS "${PROJECT_NAME}"
+                       COMMAND ${CMAKE_STRIP}
+                       ARGS $<TARGET_FILE:${PROJECT_NAME}>)
   endif ()
   if (WITH_STATIC)
     set_target_properties("${PROJECT_NAME}" PROPERTIES LINK_FLAGS "-static")
