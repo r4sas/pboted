@@ -22,7 +22,6 @@ namespace util
 
 int DaemonWin32::start()
 {
-  gracefulShutdownInterval = 0; // not specified
   return Daemon_Singleton::start();
 }
 

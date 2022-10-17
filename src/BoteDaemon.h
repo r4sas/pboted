@@ -58,9 +58,6 @@ public:
   int start() override;
   bool stop() override;
   void run() override;
-
-public:
-  int gracefulShutdownInterval; // in seconds
 };
 
 #else // WIN32
