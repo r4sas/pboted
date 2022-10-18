@@ -38,17 +38,14 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
   hints.ai_protocol = IPPROTO_UDP;
 
 #ifdef _WIN32
-  WORD wVersionRequested;
   WSADATA wsaData;
 
-  wVersionRequested = MAKEWORD(2, 2);
-
-  errcode = WSAStartup(wVersionRequested, &wsaData);
-  if (errcode != 0)
+  errcode = WSAStartup(MAKEWORD(2, 2), &wsaData);
+  if (errcode != NO_ERROR)
     {
       throw udp_client_server_runtime_error (
           ("Network: UDPReceiver: WSAStartup failed with: \"" + address
-           + ":" + decimal_port + "\", errcode=" + char(errcode) + ": " + gai_strerror (errcode))
+           + ":" + decimal_port + "\", errcode=" + std::to_string(errcode) + ": " + gai_strerror (errcode))
               .c_str ());
     }
 #endif
@@ -58,7 +55,7 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
     {
       throw udp_client_server_runtime_error (
           ("Network: UDPReceiver: Invalid address or port: \"" + address + ":"
-           + decimal_port + "\", errcode=" + gai_strerror (errcode))
+           + decimal_port + "\", errcode=" + std::to_string (errcode))
               .c_str ());
     }
 
@@ -86,10 +83,11 @@ UDPReceiver::UDPReceiver (const std::string &address, int port)
       close (f_socket);
 #else
       closesocket (f_socket);
+      WSACleanup();
 #endif
       throw udp_client_server_runtime_error (
           ("Network: UDPReceiver: Could not bind UDP socket with: \"" + address
-           + ":" + decimal_port + "\", errcode=" + char(errcode) + ": " + gai_strerror (errcode))
+           + ":" + decimal_port + "\", errcode=" + std::to_string (errcode) + ": " + gai_strerror (errcode))
               .c_str ());
     }
 }
@@ -108,6 +106,7 @@ UDPReceiver::~UDPReceiver ()
   close (f_socket);
 #else
   closesocket (f_socket);
+  WSACleanup();
 #endif
 
 }
@@ -128,14 +127,19 @@ UDPReceiver::start ()
 void
 UDPReceiver::stop ()
 {
-  m_running = false;
-
-  if (m_recv_thread)
+  if (m_running)
     {
-      m_recv_thread->join ();
-
-      delete m_recv_thread;
-      m_recv_thread = nullptr;
+      if (m_recv_thread)
+        {
+          m_running = false;
+#ifdef _WIN32
+          closesocket (f_socket);
+          WSACleanup();
+#endif
+          m_recv_thread->join ();
+          delete m_recv_thread;
+          m_recv_thread = nullptr;
+        }
     }
 
   LogPrint (eLogInfo, "Network: UDPReceiver: Stopped");
@@ -160,7 +164,6 @@ UDPReceiver::recv ()
 #else
   return ::recv (f_socket, (char *)UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
 #endif
-
 }
 
 void
@@ -521,12 +524,19 @@ NetworkWorker::createRecvHandler ()
 {
   LogPrint (eLogInfo, "Network: Starting UDP receiver with address ",
             m_listen_address, ":", m_listen_port_udp);
+  try
+    {
+      m_recv_handler = std::make_shared<UDPReceiver> (m_listen_address,
+                                                      m_listen_port_udp);
 
-  m_recv_handler = std::make_shared<UDPReceiver> (m_listen_address,
-                                                  m_listen_port_udp);
-
-  m_recv_handler->setNickname (m_nickname);
-  m_recv_handler->setQueue (m_recv_queue);
+      m_recv_handler->setNickname (m_nickname);
+      m_recv_handler->setQueue (m_recv_queue);
+    }
+  catch (std::exception &e)
+    {
+      LogPrint (eLogError, "NetworkWorker: ", e.what ());
+      ThrowFatal("Error: ", e.what());
+    }
 }
 
 void
@@ -535,11 +545,19 @@ NetworkWorker::createSendHandler ()
   LogPrint (eLogInfo, "Network: Starting UDP sender to address ",
             m_router_address, ":", m_router_port_udp);
 
-  m_send_handler = std::make_shared<UDPSender> (m_router_address,
-                                                m_router_port_udp);
+  try
+    {
+      m_send_handler = std::make_shared<UDPSender> (m_router_address,
+                                                    m_router_port_udp);
 
-  m_send_handler->setNickname (m_nickname);
-  m_send_handler->setQueue (m_send_queue);
+      m_send_handler->setNickname (m_nickname);
+      m_send_handler->setQueue (m_send_queue);
+    }
+  catch (std::exception &e)
+    {
+      LogPrint (eLogError, "NetworkWorker: ", e.what ());
+      ThrowFatal("Error: ", e.what());
+    }
 }
 
 } // namespace network

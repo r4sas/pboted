@@ -97,10 +97,16 @@ SMTP::start ()
 void
 SMTP::stop ()
 {
-  started = false;
-  close (server_sockfd);
-
-  LogPrint (eLogInfo, "SMTP: Stopped");
+  if (started)
+    {
+      started = false;
+#ifndef _WIN32
+      close (server_sockfd);
+#else
+      closesocket (server_sockfd);
+#endif
+      LogPrint (eLogInfo, "SMTP: Stopped");
+    }
 }
 
 void
@@ -149,7 +155,11 @@ SMTP::finish ()
   LogPrint (eLogDebug, "SMTPsession: Finish session");
 
   processing = false;
+#ifndef _WIN32
   close (client_sockfd);
+#else
+  closesocket (client_sockfd);
+#endif
 
   LogPrint (eLogInfo, "SMTPsession: Socket closed");
 }
@@ -300,7 +310,7 @@ SMTP::EHLO ()
   session_state = STATE_EHLO;
   */
 
-  reply (reply_5XX[CODE_502]);    
+  reply (reply_5XX[CODE_502]);
 }
 
 void

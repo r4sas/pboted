@@ -55,6 +55,7 @@ public:
       return instance;
     }
 
+  bool init(int argc, char *argv[]) override;
   int start() override;
   bool stop() override;
   void run() override;

@@ -101,7 +101,7 @@ Daemon_Singleton::init(int argc, char *argv[],
   if (logclftime)
     pbote::log::Logger().SetTimeFormat("[%d/%b/%Y:%H:%M:%S %z]");
 
-  if (isDaemon &&(logs.empty() || logs == "stdout"))
+  if (isDaemon && (logs.empty() || logs == "stdout"))
     logs = "file";
 
   pbote::log::Logger().SetLogLevel(loglevel);
@@ -172,7 +172,13 @@ Daemon_Singleton::start()
   if (isDaemon)
     {
       LogPrint(eLogInfo, "Daemon: Starting control socket");
+#ifndef _WIN32
       d.control_server = std::make_unique<bote::BoteControl>("/run/pboted/pboted.sock");
+#else
+      std::string sock;
+      sock = pbote::fs::DataDirPath("pboted.sock");
+      d.control_server = std::make_unique<bote::BoteControl>(sock.c_str());
+#endif
       d.control_server->start();
     }
 

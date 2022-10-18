@@ -1,4 +1,4 @@
-#include "../src/version.h"
+#include "../version.h"
 
 #define MAINICON                  101
 

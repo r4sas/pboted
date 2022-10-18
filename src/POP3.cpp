@@ -38,7 +38,7 @@ POP3::POP3 (const std::string &address, int port)
     server_addr (),
     client_addr (),
     session_state (STATE_QUIT)
-    
+
 {
   std::memset (&server_addr, 0, sizeof (server_addr));
 
@@ -61,7 +61,7 @@ POP3::~POP3 ()
   stop ();
 
   pop3_thread->join ();
-  
+
   delete pop3_thread;
   pop3_thread = nullptr;
 }
@@ -98,10 +98,16 @@ POP3::start ()
 void
 POP3::stop ()
 {
-  started = false;
-  close (server_sockfd);
-
-  LogPrint (eLogInfo, "POP3: Stopped");
+  if (started)
+    {
+      started = false;
+#ifndef _WIN32
+      close (server_sockfd);
+#else
+      closesocket (server_sockfd);
+#endif
+      LogPrint (eLogInfo, "POP3: Stopped");
+    }
 }
 
 void
@@ -150,7 +156,11 @@ POP3::finish ()
   LogPrint (eLogDebug, "POP3session: Finish session");
 
   processing = false;
+#ifndef _WIN32
   close (client_sockfd);
+#else
+  closesocket (client_sockfd);
+#endif
 
   LogPrint (eLogInfo, "POP3session: Socket closed");
 }
@@ -464,7 +474,7 @@ POP3::NOOP ()
     reply (reply_err[ERR_DENIED]);
     return;
   }
-    
+
   reply (reply_ok[OK_SIMP]);
 }
 
