@@ -13,6 +13,8 @@
 #include <string>
 
 #ifndef _WIN32
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
@@ -177,12 +179,17 @@ private:
   std::thread *pop3_accepting_thread;
   std::thread *pop3_processing_thread;
 
+#ifndef _WIN32
   int server_sockfd = INVALID_SOCKET, client_sockfd = INVALID_SOCKET;
+  struct pollfd fds[POP3_MAX_CLIENTS];
+#else
+  SOCKET server_sockfd = INVALID_SOCKET, client_sockfd = INVALID_SOCKET;
+  WSAPOLLFD fds[POP3_MAX_CLIENTS];
+#endif
   std::string m_address;
   uint16_t m_port = 0;
   int nfds = 1; /* descriptors count */
 
-  struct pollfd fds[POP3_MAX_CLIENTS];
   pop3_session sessions[POP3_MAX_CLIENTS];
 };
 

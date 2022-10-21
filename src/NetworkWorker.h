@@ -15,15 +15,18 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <sys/select.h>
 #include <sys/types.h>
 #include <utility>
 
 #ifndef _WIN32
 #include <netinet/in.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #else
 #include <Winsock2.h>
+#include <ws2tcpip.h>
+#include <mstcpip.h>
+
 #endif
 
 #include "BoteContext.h"
@@ -182,7 +185,11 @@ private:
 
   sp_sam_dg_ses sam_session;
 
+#ifndef _WIN32
   int m_socket;
+#else
+  SOCKET m_socket;
+#endif
   int m_sam_port;
   std::string m_sam_addr;
   struct addrinfo *m_sam_addrinfo;

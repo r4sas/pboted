@@ -99,7 +99,12 @@ UDPReceiver::start ()
   if (rc != 0)
     {
       freeaddrinfo (res);
+#ifndef _WIN32
       close (server_sockfd);
+#else
+      closesocket (server_sockfd);
+      WSACleanup();
+#endif
       LogPrint (eLogError, "Network: UDPReceiver: Could not bind UDP socket ",
                 m_address, ":", m_port, ": ", strerror (errno));
       return;
@@ -128,6 +133,7 @@ UDPReceiver::stop ()
   close (server_sockfd);
 #else
   closesocket (server_sockfd);
+  WSACleanup();
 #endif
   //freeaddrinfo (server_addr);
 
@@ -179,7 +185,11 @@ void
 UDPReceiver::handle_receive ()
 {
   /* ToDo: recvfrom? */
+#ifndef _WIN32
   ssize_t rc = recv (server_sockfd, UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
+#else
+  ssize_t rc = recv (server_sockfd, (char *)UDP_recv_buffer, MAX_DATAGRAM_SIZE, 0);
+#endif
 
   if (!m_running)
     return;
@@ -278,7 +288,7 @@ UDPSender::start ()
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_flags = 0;
   hints.ai_protocol = 0;
-  
+
   int rc = getaddrinfo (m_sam_addr.c_str (), c_port, &hints, &m_sam_addrinfo);
   if (rc != 0 || m_sam_addrinfo == nullptr)
     {
@@ -289,9 +299,18 @@ UDPSender::start ()
 
   m_socket = socket (m_sam_addrinfo->ai_family, m_sam_addrinfo->ai_socktype,
                      m_sam_addrinfo->ai_protocol);
+#ifndef _WIN32
   if (m_socket < 0)
-    {
+#else
+  if (m_socket == INVALID_SOCKET)
+#endif
+{
+#ifndef _WIN32
       close (m_socket);
+#else
+      closesocket (m_socket);
+      WSACleanup();
+#endif
       LogPrint (eLogError, "Network: UDPSender: Can't create socket for: ",
                 m_sam_addr, ":", m_sam_port);
       return;
@@ -314,7 +333,12 @@ UDPSender::stop ()
 
   freeaddrinfo (m_sam_addrinfo);
   FD_CLR (m_socket, &m_wset);
+#ifndef _WIN32
   close (m_socket);
+#else
+  closesocket (m_socket);
+  WSACleanup();
+#endif
 
   LogPrint (eLogInfo, "Network: UDPSender: Stopped");
 }
@@ -516,7 +540,7 @@ NetworkWorker::stop ()
 
   m_receiver->stop ();
   m_sender->stop ();
-  
+
   // ToDo: Close SAM session
 
   LogPrint (eLogInfo, "Network: Stopped");

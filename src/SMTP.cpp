@@ -9,14 +9,8 @@
 
 #include <cstring>
 #include <errno.h>
-#include <netdb.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#ifndef _WIN32
-#include <netinet/in.h>
-#include <sys/socket.h>
-#endif
 
 #include "BoteContext.h"
 #include "Logging.h"
@@ -82,7 +76,11 @@ SMTP::start ()
 
   server_sockfd = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
 
+#ifndef _WIN32
   if (server_sockfd == -1)
+#else
+  if (server_sockfd == INVALID_SOCKET)
+#endif
     {
       // ToDo: add error handling
       freeaddrinfo (res);
@@ -133,7 +131,11 @@ SMTP::stop ()
   /* Clean up all of the sockets that are open */
   for (int i = 0; i < nfds; i++)
     {
-      if(fds[i].fd >= 0)
+#ifndef _WIN32
+      if (fds[i].fd >= 0)
+#else
+      if (fds[i].fd != INVALID_SOCKET)
+#endif
         {
 #ifndef _WIN32
           close(fds[i].fd);
@@ -164,6 +166,7 @@ SMTP::run ()
 
   while (started)
     {
+#ifndef _WIN32
       rc = poll(fds, nfds, SMTP_WAIT_TIMEOUT);
 
       if (!started)
@@ -181,6 +184,25 @@ SMTP::run ()
           LogPrint(eLogDebug, "SMTP: Poll timed out");
           continue;
         }
+#else
+      rc = WSAPoll(fds, nfds, SMTP_WAIT_TIMEOUT);
+
+      if (!started)
+        return;
+
+      /* Check to see if the poll call failed */
+      if (rc == SOCKET_ERROR)
+        {
+          LogPrint(eLogError, "SMTP: Poll error: ", strerror (WSAGetLastError()));
+          continue;
+        }
+
+      if (rc == 0)
+        {
+          LogPrint(eLogDebug, "SMTP: Poll timed out");
+          continue;
+        }
+#endif
 
       current_size = nfds;
       for (int i = 0; i < current_size; i++)
@@ -210,7 +232,11 @@ SMTP::run ()
                                      (struct sockaddr *)&client_addr,
                                      &sin_size);
 
+#ifndef _WIN32
               if (client_sockfd < 0)
+#else
+              if (client_sockfd == INVALID_SOCKET)
+#endif
               {
                 if (started && errno != EWOULDBLOCK && errno != EAGAIN)
                 {
@@ -228,7 +254,11 @@ SMTP::run ()
               sessions[nfds].state = STATE_QUIT;
 
               nfds++;
+#ifndef _WIN32
             } while (client_sockfd != -1);
+#else
+            } while (client_sockfd != INVALID_SOCKET);
+#endif
         }
     }
 }
@@ -432,7 +462,7 @@ SMTP::EHLO (int sid)
   sessions[sid].state = STATE_EHLO;
   */
 
-  reply (sid, reply_5XX[CODE_502]);    
+  reply (sid, reply_5XX[CODE_502]);
 }
 
 void

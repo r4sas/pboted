@@ -13,24 +13,21 @@
 #define DISABLE_SOCKET
 
 #include <map>
-#include <netinet/in.h>
-#include <poll.h>
 #include <string>
 #include <thread>
 
 #ifndef _WIN32
+#include <arpa/inet.h>
+#include <poll.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #else
 #include <Winsock2.h>
+#include <ws2tcpip.h>
+#include <mstcpip.h>
 #include <afunix.h>
-#endif
-
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
-#include <sys/un.h>
-#else
-// NOOP
 #endif
 
 #include "i2psam.hpp"
@@ -108,17 +105,23 @@ private:
   std::thread *m_control_acceptor_thread;
   std::thread *m_control_handler_thread;
 
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
   /* Socket stuff */
   bool m_socket_enabled = false;
 
+#ifndef _WIN32
   int conn_sockfd = INVALID_SOCKET;
+#else
+  SOCKET conn_sockfd = INVALID_SOCKET;
+#endif
   std::string socket_path;
   struct sockaddr_un file_addr;
-#endif
 
   /* TCP stuff */
+#ifndef _WIN32
   int tcp_fd = INVALID_SOCKET;
+#else
+  SOCKET tcp_fd = INVALID_SOCKET;
+#endif
   std::string m_address;
   uint16_t m_port = 0;
   socklen_t sin_size; /* for client addr */
@@ -128,10 +131,11 @@ private:
   int nfds = 1;
 #ifndef _WIN32
   int client_sockfd = INVALID_SOCKET;
-#else
-  SOCKET client_sockfd;
-#endif
   struct pollfd fds[CONTROL_MAX_CLIENTS];
+#else
+  SOCKET client_sockfd = INVALID_SOCKET;
+  WSAPOLLFD fds[CONTROL_MAX_CLIENTS];
+#endif
   control_session sessions[CONTROL_MAX_CLIENTS];
 
   std::map<std::string, Handler> handlers;

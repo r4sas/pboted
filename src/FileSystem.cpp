@@ -63,7 +63,7 @@ DetectDataDir (const std::string &cmdline_param, bool isService)
         }
       else
         {
-           dataDir = boost::filesystem::wpath(commonAppData).string() + dirSep + appName;
+           dataDir = std::filesystem::path(commonAppData).string() + dirSep + appName;
         }
 #else
       dataDir = "/var/lib/" + appName;
@@ -82,9 +82,9 @@ DetectDataDir (const std::string &cmdline_param, bool isService)
         }
       else
         {
-          auto execPath = boost::filesystem::wpath(localAppData).parent_path();
+          auto execPath = std::filesystem::path(localAppData).parent_path();
 
-          if(boost::filesystem::exists(execPath/"pboted.conf"))
+          if(std::filesystem::exists(execPath/"pboted.conf"))
             {
               dataDir = execPath.string ();
             }
@@ -97,7 +97,7 @@ DetectDataDir (const std::string &cmdline_param, bool isService)
                 }
               else
                 {
-                  dataDir = boost::filesystem::wpath(localAppData).string() + dirSep + appName;
+                  dataDir = std::filesystem::path(localAppData).string() + dirSep + appName;
                 }
             }
         }

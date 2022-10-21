@@ -9,17 +9,8 @@
 
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#ifndef _WIN32
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#else
-#include <Winsock2.h>
-#endif
 
 #include "BoteContext.h"
 #include "EmailWorker.h"
@@ -37,7 +28,7 @@ POP3::POP3 (const std::string &address, int port)
     pop3_accepting_thread (nullptr),
     pop3_processing_thread (nullptr),
     m_address (address),
-    m_port (port)  
+    m_port (port)
 {}
 
 POP3::~POP3 ()
@@ -55,7 +46,7 @@ POP3::~POP3 ()
   if (pop3_accepting_thread)
     {
       pop3_accepting_thread->join ();
-  
+
       delete pop3_accepting_thread;
       pop3_accepting_thread = nullptr;
     }
@@ -93,7 +84,11 @@ POP3::start ()
 
   server_sockfd = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
 
+#ifndef _WIN32
   if (server_sockfd == -1)
+#else
+  if (server_sockfd == INVALID_SOCKET)
+#endif
     {
       // ToDo: add error handling
       freeaddrinfo (res);
@@ -144,8 +139,12 @@ POP3::stop ()
   /* Clean up all of the sockets that are open */
   for (int i = 0; i < nfds; i++)
     {
+#ifndef _WIN32
       if (fds[i].fd >= 0)
-        {
+#else
+      if (fds[i].fd != INVALID_SOCKET)
+#endif
+{
 #ifndef _WIN32
           close (fds[i].fd);
 #else
@@ -171,6 +170,7 @@ POP3::run ()
 
   while (started)
     {
+#ifndef _WIN32
       rc = poll(fds, nfds, POP3_WAIT_TIMEOUT);
 
       if (!started)
@@ -188,6 +188,25 @@ POP3::run ()
           LogPrint(eLogDebug, "POP3: Poll timed out");
           continue;
         }
+#else
+      rc = WSAPoll(fds, nfds, POP3_WAIT_TIMEOUT);
+
+      if (!started)
+        return;
+
+      /* Check to see if the poll call failed */
+      if (rc == SOCKET_ERROR)
+        {
+          LogPrint(eLogError, "POP3: Poll error: ", strerror (WSAGetLastError()));
+          continue;
+        }
+
+      if (rc == 0)
+        {
+          LogPrint(eLogDebug, "POP3: Poll timed out");
+          continue;
+        }
+#endif
 
       current_size = nfds;
       for (int i = 0; i < current_size; i++)
@@ -217,7 +236,11 @@ POP3::run ()
                                      (struct sockaddr *)&client_addr,
                                      &sin_size);
 
+#ifndef _WIN32
               if (client_sockfd < 0)
+#else
+              if (client_sockfd == INVALID_SOCKET)
+#endif
               {
                 if (started && errno != EWOULDBLOCK && errno != EAGAIN)
                 {
@@ -235,7 +258,11 @@ POP3::run ()
               sessions[nfds].state = STATE_QUIT;
 
               nfds++;
+#ifndef _WIN32
             } while (client_sockfd != -1);
+#else
+            } while (client_sockfd != INVALID_SOCKET);
+#endif
         }
     }
 }
@@ -603,7 +630,7 @@ POP3::NOOP (int sid)
     reply (sid, reply_err[ERR_DENIED]);
     return;
   }
-    
+
   reply (sid, reply_ok[OK_SIMP]);
 }
 

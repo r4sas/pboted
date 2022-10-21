@@ -7,10 +7,8 @@
  * See full license text in LICENSE file at top of project tree
  */
 
-#include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>
-#include <netinet/in.h>
 
 #include "BoteControl.h"
 #include "BoteContext.h"
@@ -27,7 +25,6 @@ BoteControl::BoteControl ()
     m_control_acceptor_thread (nullptr),
     m_control_handler_thread (nullptr)
 {
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
   pbote::config::GetOption("control.socket", socket_path);
   if (socket_path.empty ())
     {
@@ -48,7 +45,7 @@ BoteControl::BoteControl ()
                     socket_path);
         }
     }
-#endif
+
   pbote::config::GetOption("control.address", m_address);
   pbote::config::GetOption("control.port", m_port);
 
@@ -91,7 +88,6 @@ BoteControl::start ()
   LogPrint (eLogInfo, "Control: Starting");
 
   int cur_sn = 0, rc = 0;
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
   if (m_socket_enabled)
     {
       conn_sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
@@ -136,7 +132,7 @@ BoteControl::start ()
             }
         }
     }
-#endif
+
   struct addrinfo hints;
   memset(&hints, 0, sizeof(struct addrinfo));
 
@@ -162,7 +158,11 @@ BoteControl::start ()
     }
 
   tcp_fd = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
+#ifndef _WIN32
   if (tcp_fd == (int)INVALID_SOCKET)
+#else
+  if (tcp_fd == INVALID_SOCKET)
+#endif
     {
       freeaddrinfo (res);
       LogPrint (eLogError, "Control: TCP socket: ", m_address, ":", m_port,
@@ -175,7 +175,11 @@ BoteControl::start ()
     {
       // ToDo: add error handling
       freeaddrinfo (res);
+#ifndef _WIN32
       close (tcp_fd);
+#else
+      closesocket (tcp_fd);
+#endif
       LogPrint (eLogError, "Control: TCP bind error: ", strerror (errno));
       return;
     }
@@ -220,11 +224,19 @@ BoteControl::stop ()
   /* Clean up all of the sockets that are open */
   for (int sid = 0; sid < nfds; sid++)
     {
+#ifndef _WIN32
       if(fds[sid].fd >= 0)
         {
           close(fds[sid].fd);
           fds[sid].revents = POLLHUP;
         }
+#else
+      if(fds[sid].fd != INVALID_SOCKET)
+        {
+          closesocket(fds[sid].fd);
+          fds[sid].revents = POLLHUP;
+        }
+#endif
     }
   LogPrint (eLogInfo, "Control: Sockets closed");
 
@@ -241,6 +253,7 @@ BoteControl::run ()
 
   do
     {
+#ifndef _WIN32
       rc = poll(fds, nfds, CONTROL_WAIT_TIMEOUT);
 
       if (!m_is_running)
@@ -258,6 +271,25 @@ BoteControl::run ()
           LogPrint(eLogDebug, "Control: Poll timed out");
           continue;
         }
+#else
+      rc = WSAPoll(fds, nfds, CONTROL_WAIT_TIMEOUT);
+
+      if (!m_is_running)
+        return;
+
+      /* Check to see if the poll call failed */
+      if (rc == SOCKET_ERROR)
+        {
+          LogPrint(eLogError, "Control: Poll error: ", strerror (WSAGetLastError()));
+          continue;
+        }
+
+      if (rc == 0)
+        {
+          LogPrint(eLogDebug, "Control: Poll timed out");
+          continue;
+        }
+#endif
 
       current_s = nfds;
       for (int sid = 0; sid < current_s; sid++)
@@ -272,9 +304,7 @@ BoteControl::run ()
             }
 
           if (fds[sid].fd != tcp_fd
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
               || fds[sid].fd != conn_sockfd
-#endif
               )
             continue;
 
@@ -286,7 +316,11 @@ BoteControl::run ()
                                      (struct sockaddr *)&client_addr,
                                      &sin_size);
 
+#ifndef _WIN32
               if (client_sockfd < 0)
+#else
+              if (client_sockfd != INVALID_SOCKET)
+#endif
               {
                 if (m_is_running && errno != EWOULDBLOCK && errno != EAGAIN)
                 {
@@ -304,7 +338,11 @@ BoteControl::run ()
               sessions[nfds].state = STATE_INIT;
 
               nfds++;
+#ifndef _WIN32
             } while (client_sockfd != -1);
+#else
+            } while (client_sockfd != INVALID_SOCKET);
+#endif
         }
     } while (m_is_running);
 
@@ -324,9 +362,7 @@ BoteControl::handle ()
       for (int sid = 0; sid < current_sc; sid++)
         {
           if (fds[sid].fd == tcp_fd
-#if !defined(_WIN32) || !defined(DISABLE_SOCKET)
               || fds[sid].fd == conn_sockfd
-#endif
               )
             continue;
 
@@ -336,7 +372,11 @@ BoteControl::handle ()
           /* until the recv fails with EWOULDBLOCK */
           do
           {
+#ifndef _WIN32
             if (fds[sid].fd < 0)
+#else
+            if (fds[sid].fd != INVALID_SOCKET)
+#endif
             {
               LogPrint (eLogWarning, "ControlSession: Socket already closed");
               break;
@@ -345,8 +385,13 @@ BoteControl::handle ()
             memset (sessions[sid].buf, 0, sizeof (sessions[sid].buf));
             //ssize_t rc = recv (fds[sid].fd, sessions[sid].buf,
             //                   sizeof (sessions[sid].buf), 0);
+#ifndef _WIN32
             ssize_t rc = read (fds[sid].fd, sessions[sid].buf,
                                sizeof(sessions[sid].buf));
+#else
+            ssize_t rc = recv (fds[sid].fd, sessions[sid].buf,
+                               sizeof(sessions[sid].buf), 0);
+#endif
             if (rc < 0)
             {
               LogPrint (eLogError, "ControlSession: Can't receive data, close");
@@ -371,7 +416,11 @@ BoteControl::handle ()
 
           if (close_conn)
             {
+#ifndef _WIN32
               close(fds[sid].fd);
+#else
+              closesocket(fds[sid].fd);
+#endif
               fds[sid].fd = -1;
               compress_array = true;
               ++closed_fd;
@@ -387,7 +436,11 @@ BoteControl::handle ()
       compress_array = false;
       for (int sid = 0; sid < nfds; sid++)
         {
+#ifndef _WIN32
           if (fds[sid].fd != (int)INVALID_SOCKET)
+#else
+          if (fds[sid].fd != INVALID_SOCKET)
+#endif
             continue;
 
           for(int j = sid; j < nfds; j++)
@@ -407,7 +460,11 @@ void
 BoteControl::reply (int sid, const std::string &msg)
 {
   //ssize_t rc = send (fds[sid].fd, msg.c_str (), msg.length (), 0);
+#ifndef _WIN32
   ssize_t rc = write (fds[sid].fd, msg.c_str (), msg.length ());
+#else
+  ssize_t rc = send (fds[sid].fd, msg.c_str (), msg.length (), 0);
+#endif
   if (rc == SOCKET_ERROR)
     {
       LogPrint (eLogError, "Control: reply: Failed to send data");
@@ -493,7 +550,7 @@ BoteControl::all (const std::string &cmd_id, std::ostringstream &results)
   results << ", ";
   node (empty, results);
 }
-  
+
 void
 BoteControl::daemon (const std::string &cmd_id, std::ostringstream &results)
 {

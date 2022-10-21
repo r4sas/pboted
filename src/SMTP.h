@@ -13,8 +13,10 @@
 #include <string>
 
 #ifndef _WIN32
-#include <poll.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #else
@@ -204,12 +206,17 @@ private:
   std::thread *smtp_accepting_thread;
   std::thread *smtp_processing_thread;
 
+#ifndef _WIN32
   int server_sockfd = INVALID_SOCKET, client_sockfd = INVALID_SOCKET;
+  struct pollfd fds[SMTP_MAX_CLIENTS];
+#else
+  SOCKET server_sockfd = INVALID_SOCKET, client_sockfd = INVALID_SOCKET;
+  WSAPOLLFD fds[SMTP_MAX_CLIENTS];
+#endif
   std::string m_address;
   uint16_t m_port = 0;
   int nfds = 1; /* descriptors count */
 
-  struct pollfd fds[SMTP_MAX_CLIENTS];
   smtp_session sessions[SMTP_MAX_CLIENTS];
 
   /// Session
