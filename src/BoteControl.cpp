@@ -91,7 +91,11 @@ BoteControl::start ()
   if (m_socket_enabled)
     {
       conn_sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
+#ifndef _WIN32
+      if (conn_sockfd == (int)INVALID_SOCKET)
+#else
       if (conn_sockfd == INVALID_SOCKET)
+#endif
         {
           LogPrint (eLogError, "Control: File socket: ", strerror (errno));
           return;
