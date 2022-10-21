@@ -1,14 +1,15 @@
 /**
  * Copyright (C) 2019-2022, polistern
+ * Copyright (C) 2022, The PurpleBote Team
  *
  * This file is part of pboted and licensed under BSD3
  *
  * See full license text in LICENSE file at top of project tree
  */
 
-#include <boost/filesystem.hpp>
 #include <cassert>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -909,7 +910,7 @@ Email::save (const std::string &dir)
 
   LogPrint (eLogDebug, "Email: save: Saved to ", emailPacketPath);
 
-  boost::filesystem::path p = emailPacketPath;
+  std::filesystem::path p = emailPacketPath;
   std::string p_dir = p.parent_path ().string ();
   std::string subdir = p_dir.substr (pbote::fs::GetDataDir ().size () + 1);
   LogPrint (eLogDebug, "Email: save: Subdir: ", subdir);

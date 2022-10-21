@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2019-2022, polistern
+ * Copyright (C) 2022, The PurpleBote Team
  *
  * This file is part of pboted and licensed under BSD3
  *
@@ -36,6 +37,7 @@ namespace kademlia
 
 /// Number of redundant storage nodes
 // ToDo: change to 20 on release 0.9.0
+//#define KADEMLIA_CONSTANT_K 20
 #ifdef NDEBUG
 #define KADEMLIA_CONSTANT_K 4
 #else
@@ -68,7 +70,7 @@ namespace kademlia
 #define REPLICATE_VARIANCE (5 * 60)
 
 /// Max. number of seconds to wait for replies to retrieve requests
-#define RESPONSE_TIMEOUT 30
+#define RESPONSE_TIMEOUT 15
 
 /// The maximum amount of time a FIND_CLOSEST_NODES can take
 //#define CLOSEST_NODES_LOOKUP_TIMEOUT (5 * 60)

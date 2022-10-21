@@ -1,19 +1,21 @@
 /**
  * Copyright (C) 2019-2022, polistern
+ * Copyright (C) 2022, The PurpleBote Team
  *
  * This file is part of pboted and licensed under BSD3
  *
  * See full license text in LICENSE file at top of project tree
  */
 
-#ifndef PBOTED_SRC_NETWORK_WORKER_H_
-#define PBOTED_SRC_NETWORK_WORKER_H_
+#ifndef PBOTED_SRC_NETWORK_WORKER_H
+#define PBOTED_SRC_NETWORK_WORKER_H
 
 #include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <sys/select.h>
 #include <sys/types.h>
 #include <utility>
 
@@ -28,12 +30,16 @@
 #include "Logging.h"
 #include "Queue.h"
 
-#include "i2psam.h"
+#include "i2psam.hpp"
 
 namespace pbote
 {
 namespace network
 {
+
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif
 
 /// Timeout in msec
 #define UDP_SEND_TIMEOUT 500
@@ -42,11 +48,7 @@ namespace network
 
 #define SAM_DEFAULT_NICKNAME "pboted"
 
-class udp_client_server_runtime_error : public std::runtime_error
-{
-public:
-  udp_client_server_runtime_error (const char *w) : std::runtime_error (w) {}
-};
+using sp_sam_dg_ses = std::shared_ptr<SAM::DatagramSession>;
 
 class UDPReceiver
 {
@@ -72,19 +74,19 @@ public:
   int
   get_socket () const
   {
-    return f_socket;
+    return server_sockfd;
   };
 
   int
   get_port () const
   {
-    return f_port;
+    return m_port;
   };
 
   std::string
   get_addr () const
   {
-    return f_addr;
+    return m_address;
   };
 
   bool
@@ -95,16 +97,16 @@ public:
 
 private:
   void run ();
-  ssize_t recv ();
   void handle_receive ();
 
   bool m_running;
   std::thread *m_recv_thread;
   std::string m_nickname;
-  int f_socket;
-  int f_port;
-  std::string f_addr;
-  struct addrinfo *f_addrinfo{};
+
+  int server_sockfd;
+  int m_port;
+  std::string m_address;
+  fd_set rset;
 
   uint8_t UDP_recv_buffer[MAX_DATAGRAM_SIZE + 1] = {0};
   queue_type m_recv_queue;
@@ -138,7 +140,7 @@ public:
   };
 
   void
-  set_sam_session (std::shared_ptr<SAM::DatagramSession> session)
+  set_sam_session (sp_sam_dg_ses session)
   {
     sam_session = session;
   };
@@ -146,19 +148,19 @@ public:
   int
   get_socket () const
   {
-    return f_socket;
+    return m_socket;
   };
 
   int
   get_port () const
   {
-    return f_port;
+    return m_sam_port;
   };
 
   std::string
   get_addr () const
   {
-    return f_addr;
+    return m_sam_addr;
   };
 
   bool
@@ -169,7 +171,7 @@ public:
 
 private:
   void run ();
-  void send ();
+  void handle_send ();
 
   void check_session();
 
@@ -178,12 +180,13 @@ private:
   std::string m_nickname;
   std::string m_session_id;
 
-  std::shared_ptr<SAM::DatagramSession> sam_session;
+  sp_sam_dg_ses sam_session;
 
-  int f_socket;
-  int f_port;
-  std::string f_addr;
-  struct addrinfo *f_addrinfo{};
+  int m_socket;
+  int m_sam_port;
+  std::string m_sam_addr;
+  struct addrinfo *m_sam_addrinfo;
+  fd_set m_wset;
 
   queue_type m_send_queue;
 };
@@ -198,8 +201,8 @@ public:
   void start ();
   void stop ();
 
-  void running ();
-  bool is_sick() { return m_router_session->isSick (); };
+  bool running ();
+  bool is_sick() { return m_sam_session->isSick (); };
 
 private:
   /** prevent making copies */
@@ -220,10 +223,10 @@ private:
   uint16_t m_router_port_tcp;
   uint16_t m_router_port_udp;
 
-  std::shared_ptr<SAM::DatagramSession> m_router_session;
+  sp_sam_dg_ses m_sam_session;
 
-  std::shared_ptr<UDPReceiver> m_recv_handler;
-  std::shared_ptr<UDPSender> m_send_handler;
+  std::unique_ptr<UDPReceiver> m_receiver;
+  std::unique_ptr<UDPSender> m_sender;
 
   queue_type m_recv_queue;
   queue_type m_send_queue;
@@ -234,4 +237,4 @@ extern NetworkWorker network_worker;
 } // namespace network
 } // namespace pbote
 
-#endif // PBOTED_SRC_NETWORK_WORKER_H_
+#endif // PBOTED_SRC_NETWORK_WORKER_H

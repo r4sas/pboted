@@ -1,26 +1,35 @@
 /**
- * Copyright (c) 2019-2022, polistern
+ * Copyright (C) 2019-2022, polistern
+ * Copyright (C) 2022, The PurpleBote Team
  *
  * This file is part of pboted and licensed under BSD3
  *
  * See full license text in LICENSE file at top of project tree
  */
 
-#ifndef BOTE_VERSION_H_
-#define BOTE_VERSION_H_
+#ifndef BOTE_VERSION_H
+#define BOTE_VERSION_H
 
 #define CODENAME "Plus Bote Daemon"
 
 #define STRINGIZE(x) #x
 #define MAKE_VERSION(a, b, c) STRINGIZE (a) "." STRINGIZE (b) "." STRINGIZE (c)
+#define MAKE_PROTO_VERSION(a, b) STRINGIZE (a) "." STRINGIZE (b)
 
-#define PBOTE_VERSION_MAJOR 0
-#define PBOTE_VERSION_MINOR 7
-#define PBOTE_VERSION_MICRO 11
-#define PBOTE_VERSION_PATCH 0
+#define PBOTED_VERSION_MAJOR 0
+#define PBOTED_VERSION_MINOR 7
+#define PBOTED_VERSION_MICRO 11
+#define PBOTED_VERSION_PATCH 0
 
-#define PBOTE_VERSION                                                         \
-  MAKE_VERSION (PBOTE_VERSION_MAJOR, PBOTE_VERSION_MINOR, PBOTE_VERSION_MICRO)
-#define VERSION PBOTE_VERSION
+#define PBOTED_VERSION                                                        \
+  MAKE_VERSION (PBOTED_VERSION_MAJOR, PBOTED_VERSION_MINOR, PBOTED_VERSION_MICRO)
 
-#endif // BOTE_VERSION_H_
+#define BOTE_VERSION_MAJOR 4
+#define BOTE_VERSION_MINOR 1
+
+#define BOTE_VERSION                                                          \
+  MAKE_PROTO_VERSION (BOTE_VERSION_MAJOR, BOTE_VERSION_MINOR)
+
+#define VERSION PBOTED_VERSION " " "(" BOTE_VERSION ")"
+
+#endif // BOTE_VERSION_H
