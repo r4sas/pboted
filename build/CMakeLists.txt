@@ -65,7 +65,7 @@ add_library(liblzma ${LIBLZMA_SRC})
 set_target_properties(liblzma PROPERTIES PREFIX "")
 
 # pboted stuff
-include_directories(${PBOTE_SRC_DIR})
+include_directories(${PBOTED_SRC_DIR})
 file(GLOB PBOTED_SRC ${PBOTED_SRC_DIR}/*.cpp)
 
 if (MSYS)
@@ -74,15 +74,15 @@ if (MSYS)
   SET(CMAKE_RC_COMPILE_OBJECT
       "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
 
-  set(WIN32_SRC_DIR ${PBOTE_SRC_DIR}/win32)
+  set(WIN32_SRC_DIR ${PBOTED_SRC_DIR}/win32)
   file(GLOB WIN32_RC ${WIN32_SRC_DIR}/*.rc)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32 -DWIN32_LEAN_AND_MEAN")
 endif ()
 
 # Compiler flags customization (by vendor)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Winvalid-pch -Wno-unused-parameter")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Winvalid-pch -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -pedantic")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flto -s -ffunction-sections -fdata-sections")
 set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "-Wl,--gc-sections") # -flto is added from above
@@ -212,14 +212,14 @@ if (NOT MSVC)
         "ws2_32"
         "iphlpapi"
     )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                       DEPENDS "${PROJECT_NAME}"
-                       COMMAND ${CMAKE_OBJCOPY}
-                       ARGS --only-keep-debug $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE:${PROJECT_NAME}>.debug)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                       DEPENDS "${PROJECT_NAME}"
-                       COMMAND ${CMAKE_STRIP}
-                       ARGS $<TARGET_FILE:${PROJECT_NAME}>)
+    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #                   DEPENDS "${PROJECT_NAME}"
+    #                   COMMAND ${CMAKE_OBJCOPY}
+    #                   ARGS --only-keep-debug $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE:${PROJECT_NAME}>.debug)
+    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #                   DEPENDS "${PROJECT_NAME}"
+    #                   COMMAND ${CMAKE_STRIP}
+    #                   ARGS $<TARGET_FILE:${PROJECT_NAME}>)
   endif ()
   if (WITH_STATIC)
     set_target_properties("${PROJECT_NAME}" PROPERTIES LINK_FLAGS "-static")

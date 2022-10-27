@@ -62,6 +62,10 @@ public:
   int start() override;
   bool stop() override;
   void run() override;
+
+private:
+  mutable std::mutex m_cv_mutex;
+  std::condition_variable m_check_cv;
 };
 
 #else // WIN32

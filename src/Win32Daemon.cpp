@@ -90,18 +90,32 @@ int DaemonWin32::start()
 
 bool DaemonWin32::stop()
 {
-  if (running)
-    running = false;
+  if (!running)
+    return true;
+
+  running = false;
+
+  m_check_cv.notify_one ();
 
   return Daemon_Singleton::stop();
 }
 
 void DaemonWin32::run()
 {
+  auto check_timeout = std::chrono::seconds (10);
+
   while (running)
     {
-      // ToDo: check status of network, DHT, relay, etc. and try restart on error
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      {
+        std::unique_lock<std::mutex> lk (m_cv_mutex);
+        auto rc = m_check_cv.wait_for (lk, check_timeout);
+        if (rc == std::cv_status::no_timeout)
+          LogPrint (eLogDebug, "Daemon: Got notification");
+        lk.unlock ();
+      }
+
+      /* ToDo: check status of network, DHT, relay, etc. */
+      /* and try restart on error */
 
       if (pbote::network::network_worker.is_sick ())
         {

@@ -304,7 +304,7 @@ UDPSender::start ()
 #else
   if (m_socket == INVALID_SOCKET)
 #endif
-{
+    {
 #ifndef _WIN32
       close (m_socket);
 #else
@@ -485,7 +485,7 @@ NetworkWorker::start ()
       m_receiver->start ();
 
       if (!first_attempt)
-        std::this_thread::sleep_for (std::chrono::seconds (10));
+        std::this_thread::sleep_for (std::chrono::seconds (5));
 
     } while (!m_receiver->running ());
 
@@ -499,7 +499,7 @@ NetworkWorker::start ()
       while (!success)
         {
           if (!first_attempt)
-            std::this_thread::sleep_for (std::chrono::seconds (10));
+            std::this_thread::sleep_for (std::chrono::seconds (5));
 
           first_attempt = false;
 
